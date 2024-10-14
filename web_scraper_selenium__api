@@ -1,0 +1,60 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import pandas as pd
+import time
+
+def scrap():
+    chrome_options =  webdriver.ChromeOptions()
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+    chrome_options.add_argument(f'user-agent={user_agent}')
+    chrome_options.add_argument("headless")
+    chrome_options.add_argument("--window-position=-2400,-2400")
+    browser = webdriver.Chrome(options=chrome_options)
+    browser.get("https://www.bybit.com/ru-RU/")
+    names = browser.find_elements(By.CLASS_NAME, "SectionList_name__8cc7w.SectionList_left__C_1U7")
+    prices = browser.find_elements(By.CLASS_NAME, "SectionList_price__3cLEn.SectionList_right__1nar7")
+    changs = browser.find_elements(By.CLASS_NAME, "SectionList_change__4N_3l.SectionList_right__1nar7.SectionList_up__qcdEW")
+    changes = changs
+    headers = {"Coin" : [name.text for name in names],
+                "Price" : [price.text for price in prices],
+                "Change" : ["".join(change.text.splitlines()) for change in changes]} 
+    data_file = pd.DataFrame.from_dict(headers, orient="index")
+    data_file = data_file.transpose()
+    print(data_file)
+    data_file.to_json('crypto.json', orient='records', default_handler=str)
+    browser.quit()
+
+if __name__ == "__main__":
+    while True:
+        scrap()
+        time_wait = 15
+        print(f"Waiting {time_wait} seconds...")
+        time.sleep(time_wait)
+
+
+
+# import requests
+# import time
+
+# def get_coin_data():
+#     url = "https://api-testnet.bybit.com/v5/market/tickers?category=inverse"
+#     response = requests.get(url)
+#     data = response.json()
+
+#     if data["retCode"] == 0:
+#         coins = data["result"]["list"]
+#         for coin in coins:
+#             symbol = coin["symbol"]
+#             price = coin["lastPrice"]
+#             price_change_percent = coin["price24hPcnt"]
+#             print(f"Coin: {symbol}, Price: {price}, Change (24h): {float(price_change_percent) * 100:.2f}%")
+#     else:
+#         print("Error fetching data:", data["ret_msg"])
+
+# def main():
+#     while True:
+#         get_coin_data()
+#         time.sleep(10)
+
+# if __name__ == "__main__":
+#     main()
